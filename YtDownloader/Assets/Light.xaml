@@ -1,0 +1,48 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════
+         PALETTE — Light
+         Mirrors Dark.xaml's semantic roles (same key names, same relative
+         lightness ordering BgDeep < BgSurface < BgCard < BgHover), just
+         inverted for a light background.
+    ═══════════════════════════════════════ -->
+    <Color x:Key="BgDeepColor">#EEF0F6</Color>
+    <Color x:Key="BgSurfaceColor">#FFFFFF</Color>
+    <Color x:Key="BgCardColor">#FFFFFF</Color>
+    <Color x:Key="BgHoverColor">#E7E9F2</Color>
+    <Color x:Key="AccentColor">#FF3B5F</Color>
+    <Color x:Key="AccentDimColor">#E12F52</Color>
+    <Color x:Key="AccentGlowColor">#33FF3B5F</Color>
+    <Color x:Key="TextPrimaryColor">#14161F</Color>
+    <Color x:Key="TextSecondaryColor">#5C6178</Color>
+    <Color x:Key="TextMutedColor">#9CA0B4</Color>
+    <Color x:Key="BorderColor">#E0E2EC</Color>
+    <Color x:Key="BorderBrightColor">#C7CADC</Color>
+    <Color x:Key="SuccessColor">#00A876</Color>
+    <Color x:Key="WarningColor">#D98600</Color>
+    <Color x:Key="ErrorColor">#E1374A</Color>
+
+    <SolidColorBrush x:Key="BgDeep"      Color="{StaticResource BgDeepColor}"/>
+    <SolidColorBrush x:Key="BgSurface"   Color="{StaticResource BgSurfaceColor}"/>
+    <SolidColorBrush x:Key="BgCard"      Color="{StaticResource BgCardColor}"/>
+    <SolidColorBrush x:Key="BgHover"     Color="{StaticResource BgHoverColor}"/>
+    <SolidColorBrush x:Key="Accent"      Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="AccentDim"   Color="{StaticResource AccentDimColor}"/>
+    <SolidColorBrush x:Key="AccentGlow"  Color="{StaticResource AccentGlowColor}"/>
+    <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}"/>
+    <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}"/>
+    <SolidColorBrush x:Key="TextMuted"   Color="{StaticResource TextMutedColor}"/>
+    <SolidColorBrush x:Key="Border"      Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="BorderBright" Color="{StaticResource BorderBrightColor}"/>
+    <SolidColorBrush x:Key="Success"     Color="{StaticResource SuccessColor}"/>
+    <SolidColorBrush x:Key="Warning"     Color="{StaticResource WarningColor}"/>
+    <SolidColorBrush x:Key="Error"       Color="{StaticResource ErrorColor}"/>
+
+    <!-- Translucent variants used by the Badge* styles (Base.xaml) -->
+    <SolidColorBrush x:Key="SuccessSubtle" Color="#1F00A876"/>
+    <SolidColorBrush x:Key="WarningSubtle" Color="#1FD98600"/>
+    <SolidColorBrush x:Key="ErrorSubtle"   Color="#1FE1374A"/>
+    <SolidColorBrush x:Key="AccentSubtle"  Color="#1FFF3B5F"/>
+
+</ResourceDictionary>

@@ -1,0 +1,376 @@
+<UserControl x:Class="YtDownloader.Views.DownloadView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:YtDownloader.Converters"
+             xmlns:models="clr-namespace:YtDownloader.Models">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolVis"/>
+        <conv:BoolToVisibilityConverter x:Key="InvBoolVis"
+                                        TrueValue="Collapsed"
+                                        FalseValue="Visible"/>
+        <conv:NullToVisibilityConverter x:Key="NullVis"/>
+        <conv:NullToVisibilityConverter x:Key="NotNullVis"
+                                        NullValue="Visible"
+                                        NonNullValue="Collapsed"/>
+        <conv:EmptyStringToVisibilityConverter x:Key="EmptyStringVis"/>
+        <conv:StatusToColorConverter x:Key="StatusColor"/>
+        <conv:ActiveStatusToVisibilityConverter x:Key="ActiveVis"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════════════════════════════
+             URL INPUT BAR
+        ═══════════════════════════════════ -->
+        <Border Grid.Row="0"
+                Background="{StaticResource BgSurface}"
+                Padding="24,20,24,20"
+                BorderBrush="{StaticResource Border}"
+                BorderThickness="0,0,0,1">
+            <StackPanel>
+
+                <TextBlock Text="Descargar video"
+                           Foreground="{StaticResource TextPrimary}"
+                           FontSize="{StaticResource FontMD}"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,12"/>
+
+                <!-- URL row -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox x:Name="UrlTextBox"
+                             Grid.Column="0"
+                             Style="{StaticResource ModernTextBox}"
+                             Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}"
+                             Tag="Pega una URL de YouTube, Vimeo, Twitter… (o arrástrala aquí)"
+                             AllowDrop="True"
+                             PreviewDragOver="UrlTextBox_PreviewDragOver"
+                             Drop="UrlTextBox_Drop"
+                             Margin="0,0,8,0">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding FetchInfoCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,10,0">
+                        <CheckBox Style="{StaticResource ModernCheckBox}"
+                                  Content="Solo audio"
+                                  IsChecked="{Binding AudioOnly}"
+                                  Foreground="{StaticResource TextSecondary}"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,10,0"/>
+                        <CheckBox Style="{StaticResource ModernCheckBox}"
+                                  Content="Playlist completa"
+                                  IsChecked="{Binding PlaylistMode}"
+                                  Foreground="{StaticResource TextSecondary}"
+                                  VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="2"
+                            Style="{StaticResource PrimaryButton}"
+                            Content="Obtener info"
+                            Command="{Binding FetchInfoCommand}"
+                            Width="130"/>
+                </Grid>
+
+                <!-- Error message -->
+                <TextBlock Text="{Binding FetchError}"
+                           Foreground="{StaticResource Error}"
+                           FontSize="{StaticResource FontSM}"
+                           Visibility="{Binding FetchError, Converter={StaticResource EmptyStringVis}}"
+                           Margin="0,0,0,4"/>
+
+                <!-- Fetching indicator -->
+                <StackPanel Orientation="Horizontal"
+                            Visibility="{Binding IsFetching, Converter={StaticResource BoolVis}}">
+                    <ProgressBar IsIndeterminate="True"
+                                 Width="120" Height="3"
+                                 Style="{StaticResource SlimProgressBar}"
+                                 Margin="0,0,8,0"/>
+                    <TextBlock Text="Obteniendo información…"
+                               Foreground="{StaticResource TextSecondary}"
+                               FontSize="{StaticResource FontSM}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+
+        <!-- ═══════════════════════════════════
+             VIDEO INFO CARD
+        ═══════════════════════════════════ -->
+        <Border Grid.Row="1"
+                Margin="24,16,24,0"
+                Background="{StaticResource BgCard}"
+                CornerRadius="10"
+                Padding="16"
+                Visibility="{Binding CurrentVideo, Converter={StaticResource NullVis}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Thumbnail -->
+                <Border Grid.Column="0"
+                        Width="140" Height="84"
+                        CornerRadius="6"
+                        ClipToBounds="True"
+                        Margin="0,0,16,0">
+                    <Image Source="{Binding CurrentVideo.ThumbnailUrl}"
+                           Stretch="UniformToFill"/>
+                </Border>
+
+                <!-- Metadata -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+
+                    <TextBlock Text="{Binding CurrentVideo.Title}"
+                               Foreground="{StaticResource TextPrimary}"
+                               FontSize="{StaticResource FontBase}"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="400"
+                               ToolTip="{Binding CurrentVideo.Title}"
+                               Margin="0,0,0,4"/>
+
+                    <!-- Channel + platform row (single video only) -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4"
+                                Visibility="{Binding CurrentVideo.IsPlaylist, Converter={StaticResource InvBoolVis}}">
+                        <TextBlock Text="{Binding CurrentVideo.Channel}"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="{StaticResource FontSM}"
+                                   Margin="0,0,8,0"/>
+                        <Border Background="{StaticResource BgHover}"
+                                CornerRadius="4" Padding="6,2">
+                            <TextBlock Text="{Binding CurrentVideo.Platform}"
+                                       Foreground="{StaticResource Accent}"
+                                       FontSize="{StaticResource FontXS}"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Stats row (single video only) -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8"
+                                Visibility="{Binding CurrentVideo.IsPlaylist, Converter={StaticResource InvBoolVis}}">
+                        <TextBlock Foreground="{StaticResource TextMuted}"
+                                   FontSize="{StaticResource FontXS}"
+                                   Margin="0,0,16,0">
+                            <Run Text="⏱ "/>
+                            <Run Text="{Binding CurrentVideo.FormattedDuration, Mode=OneWay}"/>
+                        </TextBlock>
+                        <TextBlock Foreground="{StaticResource TextMuted}"
+                                   FontSize="{StaticResource FontXS}"
+                                   Margin="0,0,16,0">
+                            <Run Text="👁 "/>
+                            <Run Text="{Binding CurrentVideo.FormattedViews, Mode=OneWay}"/>
+                        </TextBlock>
+                        <TextBlock Foreground="{StaticResource TextMuted}"
+                                   FontSize="{StaticResource FontXS}"
+                                   Visibility="{Binding CurrentVideo.UploadDate, Converter={StaticResource NullVis}}">
+                            <Run Text="📅 "/>
+                            <Run Text="{Binding CurrentVideo.UploadDate, Mode=OneWay, StringFormat='dd/MM/yyyy'}"/>
+                        </TextBlock>
+                    </StackPanel>
+
+                    <!-- Playlist summary (playlist mode only) -->
+                    <TextBlock Foreground="{StaticResource TextMuted}"
+                               FontSize="{StaticResource FontSM}"
+                               Margin="0,0,0,8"
+                               Visibility="{Binding CurrentVideo.IsPlaylist, Converter={StaticResource BoolVis}}">
+                        <Run Text="Se descargarán"/>
+                        <Run Text="{Binding CurrentVideo.PlaylistEntries.Count, Mode=OneWay}"/>
+                        <Run Text="videos con la calidad configurada en Ajustes."/>
+                    </TextBlock>
+
+                    <!-- Trim inputs (single video only) -->
+                    <Grid Margin="0,0,0,8"
+                          Visibility="{Binding CurrentVideo.IsPlaylist, Converter={StaticResource InvBoolVis}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="140"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0"
+                                 Style="{StaticResource ModernTextBox}"
+                                 Text="{Binding TrimStartInput, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="Inicio (mm:ss)"
+                                 Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1"
+                                 Style="{StaticResource ModernTextBox}"
+                                 Text="{Binding TrimEndInput, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="Fin (mm:ss)"/>
+                    </Grid>
+
+                    <!-- Format selector + add button -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MaxWidth="300"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0"
+                                  Style="{StaticResource ModernComboBox}"
+                                  ItemsSource="{Binding AvailableFormats}"
+                                  SelectedItem="{Binding SelectedFormat}"
+                                  Visibility="{Binding CurrentVideo.IsPlaylist, Converter={StaticResource InvBoolVis}}"
+                                  Margin="0,0,8,0"/>
+                        <Button Grid.Column="1"
+                                Style="{StaticResource PrimaryButton}"
+                                Content="+ Agregar a cola"
+                                Command="{Binding AddToQueueCommand}"
+                                Padding="16,10"/>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════════════════════════════
+             DOWNLOAD QUEUE
+        ═══════════════════════════════════ -->
+        <Grid Grid.Row="2" Margin="24,16,24,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Queue header -->
+            <Grid Grid.Row="0" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="Cola de descargas"
+                           Foreground="{StaticResource TextSecondary}"
+                           FontSize="{StaticResource FontSM}"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+                <Button Grid.Column="1"
+                        Style="{StaticResource GhostButton}"
+                        Content="Limpiar finalizadas"
+                        Command="{Binding ClearFinishedCommand}"
+                        FontSize="{StaticResource FontSM}"
+                        Padding="10,6"/>
+            </Grid>
+
+            <!-- Empty state -->
+            <Border Grid.Row="1"
+                    Background="{StaticResource BgSurface}"
+                    CornerRadius="10"
+                    Visibility="{Binding QueueItems.Count, Converter={StaticResource NotNullVis}}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="⬇" FontSize="36"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource TextMuted}"/>
+                    <TextBlock Text="Sin descargas en cola"
+                               Foreground="{StaticResource TextMuted}"
+                               FontSize="{StaticResource FontBase}"
+                               Margin="0,8,0,4"/>
+                    <TextBlock Text="Pega una URL arriba para comenzar"
+                               Foreground="{StaticResource TextMuted}"
+                               FontSize="{StaticResource FontSM}"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Queue list -->
+            <ScrollViewer Grid.Row="1"
+                          Style="{StaticResource MinimalScrollViewer}"
+                          Visibility="{Binding QueueItems.Count, Converter={StaticResource NullVis}}">
+                <ItemsControl ItemsSource="{Binding QueueItems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:DownloadItem}">
+                            <Border Background="{StaticResource BgCard}"
+                                    CornerRadius="8"
+                                    Padding="14,12"
+                                    Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Thumbnail -->
+                                    <Border Grid.Column="0"
+                                            Width="60" Height="36"
+                                            CornerRadius="4"
+                                            ClipToBounds="True"
+                                            Margin="0,0,12,0">
+                                        <Image Source="{Binding ThumbnailUrl}"
+                                               Stretch="UniformToFill"/>
+                                    </Border>
+
+                                    <!-- Info + progress -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Title}"
+                                                   Foreground="{StaticResource TextPrimary}"
+                                                   FontSize="{StaticResource FontSM}"
+                                                   FontWeight="Medium"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Margin="0,0,0,4"/>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <Ellipse Width="6" Height="6"
+                                                     Fill="{Binding Status, Converter={StaticResource StatusColor}}"
+                                                     VerticalAlignment="Center"
+                                                     Margin="0,0,6,0"/>
+                                            <TextBlock Text="{Binding StatusLabel}"
+                                                       Foreground="{Binding Status, Converter={StaticResource StatusColor}}"
+                                                       FontSize="{StaticResource FontXS}"
+                                                       Margin="0,0,8,0"/>
+                                            <TextBlock Text="{Binding FormatLabel}"
+                                                       Foreground="{StaticResource TextMuted}"
+                                                       FontSize="{StaticResource FontXS}"/>
+                                        </StackPanel>
+
+                                        <!-- Progress bar (active only) -->
+                                        <ProgressBar Style="{StaticResource SlimProgressBar}"
+                                                     Value="{Binding Progress}"
+                                                     Maximum="100"
+                                                     Width="300"
+                                                     HorizontalAlignment="Left"
+                                                     Visibility="{Binding Status, Converter={StaticResource ActiveVis}}"/>
+                                    </StackPanel>
+
+                                    <!-- Actions -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                VerticalAlignment="Center">
+                                        <Button Style="{StaticResource IconButton}"
+                                                Command="{Binding DataContext.CancelDownloadCommand,
+                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding CanCancel, Converter={StaticResource BoolVis}}"
+                                                ToolTip="Cancelar"
+                                                Margin="0,0,4,0">
+                                            <TextBlock Text="✕" FontSize="12"
+                                                       Foreground="{StaticResource TextSecondary}"/>
+                                        </Button>
+                                        <Button Style="{StaticResource IconButton}"
+                                                Command="{Binding DataContext.RemoveItemCommand,
+                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding IsFinished, Converter={StaticResource BoolVis}}"
+                                                ToolTip="Quitar">
+                                            <TextBlock Text="🗑" FontSize="12"
+                                                       Foreground="{StaticResource TextSecondary}"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

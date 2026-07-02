@@ -1,0 +1,172 @@
+<Window x:Class="YtDownloader.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:YtDownloader.ViewModels"
+        xmlns:views="clr-namespace:YtDownloader.Views"
+        xmlns:conv="clr-namespace:YtDownloader.Converters"
+        Title="YtDownloader"
+        Width="1080" Height="700"
+        MinWidth="820" MinHeight="550"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="CanResizeWithGrip">
+
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolVis"/>
+        <conv:NullToVisibilityConverter x:Key="NullVis"/>
+
+        <DataTemplate DataType="{x:Type vm:DownloadViewModel}">
+            <views:DownloadView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:HistoryViewModel}">
+            <views:HistoryView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView/>
+        </DataTemplate>
+    </Window.Resources>
+
+    <!-- Drop shadow wrapper -->
+    <Border x:Name="RootBorder" Margin="12" CornerRadius="12"
+            Background="{StaticResource BgDeep}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="24" Opacity="0.6" ShadowDepth="0"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- ═══════════════ TITLE BAR ═══════════════ -->
+            <Border x:Name="TitleBarBorder" Grid.Row="0"
+                    Background="{StaticResource BgSurface}"
+                    CornerRadius="12,12,0,0"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid Margin="16,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Logo + title -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <Border Width="28" Height="28"
+                                Background="{StaticResource Accent}"
+                                CornerRadius="8"
+                                Margin="0,0,10,0">
+                            <TextBlock Text="▶" Foreground="White"
+                                       FontSize="12" FontWeight="Bold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="YtDownloader"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Status pill -->
+                    <Border Grid.Column="1"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="{StaticResource BgCard}"
+                            CornerRadius="20" Padding="12,4">
+                        <TextBlock Text="{Binding StatusMessage}"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="11"/>
+                    </Border>
+
+                    <!-- Window controls -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <Button Style="{StaticResource IconButton}"
+                                Click="MinimizeButton_Click"
+                                Margin="0,0,4,0">
+                            <TextBlock Text="—" FontSize="13"
+                                       Foreground="{StaticResource TextSecondary}"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButton}"
+                                Click="MaximizeButton_Click"
+                                Margin="0,0,4,0">
+                            <TextBlock Text="⬜" FontSize="11"
+                                       Foreground="{StaticResource TextSecondary}"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButton}"
+                                Click="CloseButton_Click">
+                            <TextBlock Text="✕" FontSize="13"
+                                       Foreground="{StaticResource TextSecondary}"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ═══════════════ BODY ═══════════════ -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ── Sidebar ── -->
+                <Border x:Name="SidebarBorder" Grid.Column="0"
+                        Background="{StaticResource BgSurface}"
+                        CornerRadius="0,0,0,12">
+                    <DockPanel>
+
+                        <!-- Nav items -->
+                        <StackPanel DockPanel.Dock="Top" Margin="12,16,12,0">
+                            <RadioButton Style="{StaticResource NavTabButton}"
+                                         IsChecked="{Binding ShowDownload}"
+                                         Tag="⬇" Content="Descargar"
+                                         Command="{Binding NavigateToCommand}"
+                                         CommandParameter="download"
+                                         GroupName="Nav"
+                                         Margin="0,0,0,4"/>
+                            <RadioButton Style="{StaticResource NavTabButton}"
+                                         IsChecked="{Binding ShowHistory}"
+                                         Tag="🕘" Content="Historial"
+                                         Command="{Binding NavigateToCommand}"
+                                         CommandParameter="history"
+                                         GroupName="Nav"
+                                         Margin="0,0,0,4"/>
+                            <RadioButton Style="{StaticResource NavTabButton}"
+                                         IsChecked="{Binding ShowSettings}"
+                                         Tag="⚙" Content="Configuración"
+                                         Command="{Binding NavigateToCommand}"
+                                         CommandParameter="settings"
+                                         GroupName="Nav"/>
+                        </StackPanel>
+
+                        <!-- Footer -->
+                        <Border DockPanel.Dock="Bottom" Margin="12" Padding="12"
+                                Background="{StaticResource BgCard}"
+                                CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Text="yt-dlp powered"
+                                           Foreground="{StaticResource TextMuted}"
+                                           FontSize="10" TextAlignment="Center"/>
+                                <TextBlock Text="Multi-platform downloader"
+                                           Foreground="{StaticResource TextMuted}"
+                                           FontSize="10" TextAlignment="Center"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                    </DockPanel>
+                </Border>
+
+                <!-- ── Main content area ── -->
+                <Border x:Name="ContentBorder" Grid.Column="1"
+                        Background="{StaticResource BgDeep}"
+                        CornerRadius="0,0,12,0">
+                    <ContentControl Content="{Binding CurrentView}"/>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
