@@ -28,20 +28,30 @@ namespace YtDownloader
             ApplyTheme(settings.Current.Theme);
         }
 
-        // Base.xaml (typography, converters, control styles — all StaticResource, theme-agnostic)
-        // is merged statically in App.xaml. The color palette is merged here at runtime as a
-        // second dictionary so the theme can be picked from AppSettings before any window exists.
+        // Base.xaml's Styles/Templates reference color keys (TextPrimary, Accent, Border, etc.)
+        // that only exist in Dark.xaml/Light.xaml. WPF resolves StaticResource inside deferred
+        // Setter/Template content against whatever is already in Application.Resources at the
+        // moment that dictionary is *merged*, not dynamically at the moment the template is
+        // applied — so Base.xaml must be merged AFTER the palette dictionary, every time,
+        // otherwise those lookups fail (silently → DependencyProperty.UnsetValue for Setters,
+        // or a thrown XamlParseException for template content) even though the palette keys are
+        // demonstrably present in Application.Resources by then. Don't merge Base.xaml statically
+        // in App.xaml or move it ahead of the palette dictionary.
         public static void ApplyTheme(string theme)
         {
-            var uri = new Uri(
+            var themeUri = new Uri(
                 theme == "Light" ? "Assets/Light.xaml" : "Assets/Dark.xaml",
                 UriKind.Relative);
-            var dict = new ResourceDictionary { Source = uri };
-
             var merged = Current.Resources.MergedDictionaries;
-            if (merged.Count > 1)
-                merged.RemoveAt(1);
-            merged.Add(dict);
+
+            if (merged.Count == 0)
+            {
+                merged.Add(new ResourceDictionary { Source = themeUri });
+                merged.Add(new ResourceDictionary { Source = new Uri("Assets/Base.xaml", UriKind.Relative) });
+                return;
+            }
+
+            merged[0] = new ResourceDictionary { Source = themeUri };
         }
 
         private static void ConfigureServices(ServiceCollection services)
